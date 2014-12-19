@@ -8,8 +8,19 @@ namespace Code
     {
         public static decimal Calculate(params Book[] books)
         {
+            return CalculatePriceOfBooks(MakeDictionary(books));
+        }
+
+        private static IDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
+        {
+            return books
+                .GroupBy(book => book.Name)
+                .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
+        }
+
+        private static decimal CalculatePriceOfBooks(IDictionary<string, int> dictionary)
+        {
             var total = 0m;
-            var dictionary = MakeDictionary(books);
 
             for (; ; )
             {
@@ -22,37 +33,33 @@ namespace Code
                         return total + dictionary.First().Value * 8m;
 
                     default:
-                        total += ReduceDictionary(dictionary);
+                        var tuple = ReduceDictionary(dictionary);
+                        dictionary = tuple.Item1;
+                        total += tuple.Item2;
                         break;
                 }
             }
         }
 
-        private static IDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
+        private static Tuple<IDictionary<string, int>, decimal> ReduceDictionary(IDictionary<string, int> dictionary)
         {
-            return books
-                .GroupBy(book => book.Name)
+            var differentBooks = dictionary.Keys;
+
+            IDictionary<string, int> newDictionary = dictionary
+                .Select(kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1))
+                .Where(kvp => kvp.Value > 0)
+                .GroupBy(kvp => kvp.Key)
                 .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
+
+            return Tuple.Create(newDictionary, DiscountedPriceOfBooks(differentBooks));
         }
 
-
-        private static decimal ReduceDictionary(IDictionary<string, int> dictionary)
+        private static decimal DiscountedPriceOfBooks(IEnumerable<string> differentBooks)
         {
-            var setOfBooks = dictionary.Keys.ToList();
-            foreach (var key in setOfBooks) dictionary[key] = dictionary[key] - 1;
+            var numDifferentBooks = differentBooks.Count();
+            var subTotal = numDifferentBooks * 8m;
 
-            var keysWithZeroCount = dictionary.Where(kvp => kvp.Value == 0).Select(kvp => kvp.Key).ToList();
-            foreach (var key in keysWithZeroCount) dictionary.Remove(key);
-
-            return DiscountedPriceOfBooks(setOfBooks);
-        }
-
-        private static decimal DiscountedPriceOfBooks(IEnumerable<string> setOfBooks)
-        {
-            var bookCount = setOfBooks.Count();
-            var subTotal = 8m * bookCount;
-
-            switch (bookCount)
+            switch (numDifferentBooks)
             {
                 case 2:
                     return subTotal * 0.95m;
@@ -67,7 +74,7 @@ namespace Code
                     return subTotal * 0.75m;
 
                 default:
-                    throw new InvalidOperationException(string.Format("Expected between 2 and 5 books but got {0}.", bookCount));
+                    throw new InvalidOperationException(string.Format("Expected between 2 and 5 books but got {0}.", numDifferentBooks));
             }
         }
     }
