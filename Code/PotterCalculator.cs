@@ -6,9 +6,8 @@ namespace Code
 {
     // TODO:
     // - use an immutable dictionary
-    // - try to avoid use of ToDictionary inside ReduceDictionary
-    // - try to eliminate the Tuple e.g. using a recursive loop passing totalSoFar or new dictionary
-    //  - keep recursively calling CalculatePriceOfBooks until it is empty ?
+    // - in CalculatePriceOfBooks, try to avoid converting the dictionary to a flat enumerable
+    //   and then back to a dictionary. It feels like there should be a better of achieving the same thing.
 
     public class PotterCalculator
     {
@@ -31,11 +30,9 @@ namespace Code
 
             var differentBooks = dictionary.Keys;
 
-            IDictionary<string, int> newDictionary = dictionary
-                .Select(kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1))
-                .Where(kvp => kvp.Value > 0)
-                .GroupBy(kvp => kvp.Key)
-                .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
+            var newDictionary = MakeDictionary(dictionary
+                                                   .Select(kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1))
+                                                   .SelectMany(kvp => Enumerable.Repeat(new Book(kvp.Key), kvp.Value)));
 
             var subTotal = totalSoFar + DiscountedPriceOfBooks(differentBooks);
 
