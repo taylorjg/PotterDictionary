@@ -4,6 +4,12 @@ using System.Linq;
 
 namespace Code
 {
+    // TODO:
+    // - use an immutable dictionary
+    // - try to avoid use of ToDictionary inside ReduceDictionary
+    // - try to eliminate the Tuple e.g. using a recursive loop passing totalSoFar or new dictionary
+    //  - keep recursively calling CalculatePriceOfBooks until it is empty ?
+
     public class PotterCalculator
     {
         public static decimal Calculate(params Book[] books)
@@ -20,28 +26,12 @@ namespace Code
 
         private static decimal CalculatePriceOfBooks(IDictionary<string, int> dictionary)
         {
-            var total = 0m;
-
-            for (; ; )
-            {
-                switch (dictionary.Count)
-                {
-                    case 0:
-                        return total;
-
-                    case 1:
-                        return total + dictionary.First().Value * 8m;
-
-                    default:
-                        var tuple = ReduceDictionary(dictionary);
-                        dictionary = tuple.Item1;
-                        total += tuple.Item2;
-                        break;
-                }
-            }
+            if (dictionary.Count == 0) return 0m;
+            if (dictionary.Count == 1) return dictionary.First().Value * 8m;
+            return ReduceDictionary(dictionary);
         }
 
-        private static Tuple<IDictionary<string, int>, decimal> ReduceDictionary(IDictionary<string, int> dictionary)
+        private static decimal ReduceDictionary(IDictionary<string, int> dictionary)
         {
             var differentBooks = dictionary.Keys;
 
@@ -51,7 +41,7 @@ namespace Code
                 .GroupBy(kvp => kvp.Key)
                 .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
 
-            return Tuple.Create(newDictionary, DiscountedPriceOfBooks(differentBooks));
+            return DiscountedPriceOfBooks(differentBooks) + CalculatePriceOfBooks(newDictionary);
         }
 
         private static decimal DiscountedPriceOfBooks(IEnumerable<string> differentBooks)
@@ -72,7 +62,7 @@ namespace Code
 
                 case 5:
                     return subTotal * 0.75m;
-
+ 
                 default:
                     throw new InvalidOperationException(string.Format("Expected between 2 and 5 books but got {0}.", numDifferentBooks));
             }
