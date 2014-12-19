@@ -14,7 +14,7 @@ namespace Code
     {
         public static decimal Calculate(params Book[] books)
         {
-            return CalculatePriceOfBooks(MakeDictionary(books));
+            return CalculatePriceOfBooks(MakeDictionary(books), 0m);
         }
 
         private static IDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
@@ -24,10 +24,10 @@ namespace Code
                 .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
         }
 
-        private static decimal CalculatePriceOfBooks(IDictionary<string, int> dictionary)
+        private static decimal CalculatePriceOfBooks(IDictionary<string, int> dictionary, decimal totalSoFar)
         {
-            if (dictionary.Count == 0) return 0m;
-            if (dictionary.Count == 1) return dictionary.First().Value * 8m;
+            if (dictionary.Count == 0) return totalSoFar;
+            if (dictionary.Count == 1) return totalSoFar + dictionary.First().Value * 8m;
 
             var differentBooks = dictionary.Keys;
 
@@ -37,7 +37,9 @@ namespace Code
                 .GroupBy(kvp => kvp.Key)
                 .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
 
-            return DiscountedPriceOfBooks(differentBooks) + CalculatePriceOfBooks(newDictionary);
+            var subTotal = totalSoFar + DiscountedPriceOfBooks(differentBooks);
+
+            return CalculatePriceOfBooks(newDictionary, subTotal);
         }
 
         private static decimal DiscountedPriceOfBooks(IEnumerable<string> differentBooks)
