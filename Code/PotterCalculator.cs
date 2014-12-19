@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace Code
 {
-    // TODO:
-    // - use an immutable dictionary
-    // - in CalculatePriceOfBooks, try to avoid converting the dictionary to a flat enumerable
-    //   and then back to a dictionary. It feels like there should be a better of achieving the same thing.
-
     public class PotterCalculator
     {
         public static decimal Calculate(params Book[] books)
@@ -16,51 +12,47 @@ namespace Code
             return CalculatePriceOfBooks(MakeDictionary(books), 0m);
         }
 
-        private static IDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
+        private static ImmutableDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
         {
             return books
-                .GroupBy(book => book.Name)
-                .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
+                .GroupBy(b => b.Name)
+                .ToImmutableDictionary(g => g.Key, g => g.Count());
         }
 
-        private static decimal CalculatePriceOfBooks(IDictionary<string, int> dictionary, decimal totalSoFar)
+        private static decimal CalculatePriceOfBooks(ImmutableDictionary<string, int> dictionary, decimal totalSoFar)
         {
             if (dictionary.Count == 0) return totalSoFar;
             if (dictionary.Count == 1) return totalSoFar + dictionary.First().Value * 8m;
 
             var differentBooks = dictionary.Keys;
 
-            var newDictionary = MakeDictionary(dictionary
-                                                   .Select(kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1))
-                                                   .SelectMany(kvp => Enumerable.Repeat(new Book(kvp.Key), kvp.Value)));
+            Func<KeyValuePair<string, int>, KeyValuePair<string, int>> decrementBookCounts = kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1);
+            Func<KeyValuePair<string, int>, bool> eliminateZeroBookCounts = kvp => kvp.Value > 0;
+            
+            var newDictionary = dictionary
+                .Select(decrementBookCounts)
+                .Where(eliminateZeroBookCounts)
+                .ToImmutableDictionary();
 
             var subTotal = totalSoFar + DiscountedPriceOfBooks(differentBooks);
 
             return CalculatePriceOfBooks(newDictionary, subTotal);
         }
 
+        private static readonly ImmutableDictionary<int, decimal> NumDifferentBooksToDiscountPercentage = new Dictionary<int, decimal>
+            {
+                {2, 5},
+                {3, 5},
+                {4, 5},
+                {5, 5}
+            }.ToImmutableDictionary();
+
         private static decimal DiscountedPriceOfBooks(IEnumerable<string> differentBooks)
         {
             var numDifferentBooks = differentBooks.Count();
-            var subTotal = numDifferentBooks * 8m;
-
-            switch (numDifferentBooks)
-            {
-                case 2:
-                    return subTotal * 0.95m;
-
-                case 3:
-                    return subTotal * 0.90m;
-
-                case 4:
-                    return subTotal * 0.80m;
-
-                case 5:
-                    return subTotal * 0.75m;
- 
-                default:
-                    throw new InvalidOperationException(string.Format("Expected between 2 and 5 books but got {0}.", numDifferentBooks));
-            }
+            var subTotalBeforeDiscount = numDifferentBooks * 8m;
+            var discountPercentage = NumDifferentBooksToDiscountPercentage.GetValueOrDefault(numDifferentBooks, 0m);
+            return (subTotalBeforeDiscount / 100) * (100 - discountPercentage);
         }
     }
 }
