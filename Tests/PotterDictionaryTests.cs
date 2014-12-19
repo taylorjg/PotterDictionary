@@ -11,7 +11,7 @@ namespace Tests
         {
             var bookA = new Book("A");
             var actual = PotterCalculator.Calculate(bookA);
-            Assert.That(actual, Is.EqualTo(8m));
+            Assert.That(actual, Is.EqualTo(PotterCalculator.UnitPrice));
         }
 
         [Test]
@@ -19,7 +19,7 @@ namespace Tests
         {
             var bookA = new Book("A");
             var actual = PotterCalculator.Calculate(bookA, bookA);
-            Assert.That(actual, Is.EqualTo(16m));
+            Assert.That(actual, Is.EqualTo(2 * PotterCalculator.UnitPrice));
         }
 
         [Test]
@@ -28,7 +28,7 @@ namespace Tests
             var bookA = new Book("A");
             var bookB = new Book("B");
             var actual = PotterCalculator.Calculate(bookA, bookB);
-            Assert.That(actual, Is.EqualTo(16m * 0.95m));
+            Assert.That(actual, Is.EqualTo(2 * PotterCalculator.UnitPrice * 0.95m));
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace Tests
             var bookA = new Book("A");
             var bookB = new Book("B");
             var actual = PotterCalculator.Calculate(bookA, bookA, bookB);
-            Assert.That(actual, Is.EqualTo(8m + (16m * 0.95m)));
+            Assert.That(actual, Is.EqualTo(PotterCalculator.UnitPrice + (2 * PotterCalculator.UnitPrice * 0.95m)));
         }
     }
 }

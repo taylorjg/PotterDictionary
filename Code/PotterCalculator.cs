@@ -7,6 +7,8 @@ namespace Code
 {
     public class PotterCalculator
     {
+        public const decimal UnitPrice = 8m;
+
         public static decimal Calculate(params Book[] books)
         {
             return CalculatePriceOfBooks(MakeDictionary(books), 0m);
@@ -22,37 +24,42 @@ namespace Code
         private static decimal CalculatePriceOfBooks(ImmutableDictionary<string, int> dictionary, decimal totalSoFar)
         {
             if (dictionary.Count == 0) return totalSoFar;
-            if (dictionary.Count == 1) return totalSoFar + dictionary.First().Value * 8m;
+            if (dictionary.Count == 1) return totalSoFar + UndiscountedPriceOfBooks(dictionary.First());
 
             var differentBooks = dictionary.Keys;
 
-            Func<KeyValuePair<string, int>, KeyValuePair<string, int>> decrementBookCounts = kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1);
-            Func<KeyValuePair<string, int>, bool> eliminateZeroBookCounts = kvp => kvp.Value > 0;
+            Func<KeyValuePair<string, int>, KeyValuePair<string, int>> decrementBookCount = kvp => new KeyValuePair<string, int>(kvp.Key, kvp.Value - 1);
+            Func<KeyValuePair<string, int>, bool> bookCountIsPositive = kvp => kvp.Value > 0;
             
-            var newDictionary = dictionary
-                .Select(decrementBookCounts)
-                .Where(eliminateZeroBookCounts)
+            var reducedDictionary = dictionary
+                .Select(decrementBookCount)
+                .Where(bookCountIsPositive)
                 .ToImmutableDictionary();
 
             var subTotal = totalSoFar + DiscountedPriceOfBooks(differentBooks);
 
-            return CalculatePriceOfBooks(newDictionary, subTotal);
+            return CalculatePriceOfBooks(reducedDictionary, subTotal);
         }
 
-        private static readonly ImmutableDictionary<int, decimal> NumDifferentBooksToDiscountPercentage = new Dictionary<int, decimal>
-            {
-                {2, 5},
-                {3, 5},
-                {4, 5},
-                {5, 5}
-            }.ToImmutableDictionary();
+        private static decimal UndiscountedPriceOfBooks(KeyValuePair<string, int> kvp)
+        {
+            return kvp.Value * UnitPrice;
+        }
 
         private static decimal DiscountedPriceOfBooks(IEnumerable<string> differentBooks)
         {
             var numDifferentBooks = differentBooks.Count();
-            var subTotalBeforeDiscount = numDifferentBooks * 8m;
-            var discountPercentage = NumDifferentBooksToDiscountPercentage.GetValueOrDefault(numDifferentBooks, 0m);
+            var subTotalBeforeDiscount = numDifferentBooks * UnitPrice;
+            var discountPercentage = NumberOfDifferentBooksToDiscountPercentage.GetValueOrDefault(numDifferentBooks, 0m);
             return (subTotalBeforeDiscount / 100) * (100 - discountPercentage);
         }
+
+        private static readonly ImmutableDictionary<int, decimal> NumberOfDifferentBooksToDiscountPercentage = new Dictionary<int, decimal>
+            {
+                {2, 5},
+                {3, 10},
+                {4, 20},
+                {5, 25}
+            }.ToImmutableDictionary();
     }
 }
