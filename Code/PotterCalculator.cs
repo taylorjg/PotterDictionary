@@ -28,11 +28,7 @@ namespace Code
         {
             if (dictionary.Count == 0) return 0m;
             if (dictionary.Count == 1) return dictionary.First().Value * 8m;
-            return ReduceDictionary(dictionary);
-        }
 
-        private static decimal ReduceDictionary(IDictionary<string, int> dictionary)
-        {
             var differentBooks = dictionary.Keys;
 
             IDictionary<string, int> newDictionary = dictionary
