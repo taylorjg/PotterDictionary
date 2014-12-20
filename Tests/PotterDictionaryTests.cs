@@ -10,33 +10,22 @@ namespace Tests
     {
         private const decimal UnitPrice = PotterCalculator.UnitPrice;
 
-        [Test]
-        public void OneBook()
+        [TestCaseSource("TestCaseSourceForBasics")]
+        public void Basics(string bookNames, decimal expected)
         {
-            var bookA = new Book("A");
-            var actual = PotterCalculator.CalculatePrice(bookA);
-            Assert.That(actual, Is.EqualTo(UnitPrice));
+            var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
-        [Test]
-        public void TwoBooksSame()
+        [TestCaseSource("TestCaseSourceForSimpleDiscounts")]
+        public void SimpleDiscounts(string bookNames, decimal expected)
         {
-            var bookA = new Book("A");
-            var actual = PotterCalculator.CalculatePrice(bookA, bookA);
-            Assert.That(actual, Is.EqualTo(2 * UnitPrice));
+            var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
-        [Test]
-        public void TwoBooksDifferent()
-        {
-            var bookA = new Book("A");
-            var bookB = new Book("B");
-            var actual = PotterCalculator.CalculatePrice(bookA, bookB);
-            Assert.That(actual, Is.EqualTo(2 * UnitPrice * 0.95m));
-        }
-
-        [TestCaseSource("TestCaseSourceForTwoBooksSamePlusOneDifferent")]
-        public void TwoBooksSamePlusOneDifferent(string bookNames, decimal expected)
+        [TestCaseSource("TestCaseSourceForSeveralDiscounts")]
+        public void SeveralDiscounts(string bookNames, decimal expected)
         {
             var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
             Assert.That(actual, Is.EqualTo(expected));
@@ -44,21 +33,32 @@ namespace Tests
 
         // ReSharper disable UnusedMethodReturnValue.Local
 
-        private static IEnumerable<ITestCaseData> TestCaseSourceForTwoBooksSamePlusOneDifferent()
+        private static IEnumerable<ITestCaseData> TestCaseSourceForBasics()
         {
-            const decimal expected = UnitPrice + (2m * UnitPrice * 0.95m);
+            yield return new TestCaseData("", 0 * UnitPrice);
+            yield return new TestCaseData("A", 1 * UnitPrice);
+            yield return new TestCaseData("B", 1 * UnitPrice);
+            yield return new TestCaseData("C", 1 * UnitPrice);
+            yield return new TestCaseData("D", 1 * UnitPrice);
+            yield return new TestCaseData("E", 1 * UnitPrice);
+            yield return new TestCaseData("A,A", 2 * UnitPrice);
+            yield return new TestCaseData("B,B,B", 3 * UnitPrice);
+        }
 
-            yield return new TestCaseData("A,A,B", expected);
-            yield return new TestCaseData("A,B,A", expected);
-            yield return new TestCaseData("B,A,A", expected);
+        private static IEnumerable<ITestCaseData> TestCaseSourceForSimpleDiscounts()
+        {
+            yield return new TestCaseData("A,B", 2 * UnitPrice * 0.95m);
+            yield return new TestCaseData("A,C,E", 3 * UnitPrice * 0.90m);
+            yield return new TestCaseData("A,B,C,E", 4 * UnitPrice * 0.80m);
+            yield return new TestCaseData("A,B,C,D,E", 5 * UnitPrice * 0.75m);
+        }
 
-            yield return new TestCaseData("A,A,C", expected);
-            yield return new TestCaseData("A,C,A", expected);
-            yield return new TestCaseData("C,A,A", expected);
-
-            yield return new TestCaseData("E,E,D", expected);
-            yield return new TestCaseData("E,D,E", expected);
-            yield return new TestCaseData("D,E,E", expected);
+        private static IEnumerable<ITestCaseData> TestCaseSourceForSeveralDiscounts()
+        {
+            yield return new TestCaseData("A,A,B", (1 * UnitPrice) + (2 * UnitPrice * 0.95m));
+            yield return new TestCaseData("A,A,B,B", (2 * UnitPrice * 0.95m) * 2);
+            yield return new TestCaseData("A,A,B,C,C,D", (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m));
+            yield return new TestCaseData("A,B,B,C,D,E", (1 * UnitPrice) + (5 * UnitPrice * 0.75m));
         }
     }
 }
