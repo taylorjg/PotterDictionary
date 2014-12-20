@@ -9,9 +9,9 @@ namespace Code
     {
         public const decimal UnitPrice = 8m;
 
-        public static decimal Calculate(params Book[] books)
+        public static decimal CalculatePrice(params Book[] books)
         {
-            return CalculatePriceOfBooks(MakeDictionary(books), 0m);
+            return CalculateDictionary(MakeDictionary(books), 0m);
         }
 
         private static ImmutableDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
@@ -21,7 +21,7 @@ namespace Code
                 .ToImmutableDictionary(g => g.Key, g => g.Count());
         }
 
-        private static decimal CalculatePriceOfBooks(ImmutableDictionary<string, int> dictionary, decimal totalSoFar)
+        private static decimal CalculateDictionary(ImmutableDictionary<string, int> dictionary, decimal totalSoFar)
         {
             if (dictionary.Count == 0) return totalSoFar;
             if (dictionary.Count == 1) return totalSoFar + UndiscountedPriceOfBooks(dictionary.First());
@@ -38,7 +38,7 @@ namespace Code
 
             var subTotal = totalSoFar + DiscountedPriceOfBooks(differentBooks);
 
-            return CalculatePriceOfBooks(reducedDictionary, subTotal);
+            return CalculateDictionary(reducedDictionary, subTotal);
         }
 
         private static decimal UndiscountedPriceOfBooks(KeyValuePair<string, int> kvp)
