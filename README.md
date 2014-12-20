@@ -12,7 +12,7 @@ NOTE: I have not catered for the edge cases.
 
 ## Links
 
-* [Harry Potter Kata](http://codingdojo.org/cgi-bin/index.pl?KataPotter])
+* [Harry Potter Kata](http://codingdojo.org/cgi-bin/index.pl?KataPotter)
 * [System.Collections.Immutable NuGet Package](http://www.nuget.org/packages/System.Collections.Immutable/1.1.33-beta)
 
 ## Oddity Regarding Immutable Collections and NUnit
