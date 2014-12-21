@@ -64,14 +64,14 @@ namespace PropertyTests
         private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(GetCombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
 
         private static readonly Gen<string[]> GenMultipleTitlesTheSame =
-            GenOneTitle.SelectMany(
-                title => Gen.choose(1, 10).Select(
-                    n => Enumerable.Repeat(title, n).ToArray()));
+            from title in GenOneTitle
+            from n in Gen.choose(1, 10)
+            select Enumerable.Repeat(title, n).ToArray();
 
         private static readonly Gen<string[]> GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
-            GenFourDifferentTitles.SelectMany(
-                four => Gen.elements(GetCombinationsOfTwoDifferentTitles(four)).Select(
-                    two => four.Concat(two).ToArray()));
+            from four in GenFourDifferentTitles
+            from two in Gen.elements(GetCombinationsOfTwoDifferentTitles(four))
+            select four.Concat(two).ToArray();
 
         private static bool CheckPrice(IEnumerable<string> titles, decimal expectedPrice)
         {
