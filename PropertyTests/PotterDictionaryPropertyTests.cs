@@ -15,72 +15,63 @@ namespace PropertyTests
             return titles.Distinct().Count() == titles.Count;
         }
 
-        private static readonly IEnumerable<string[]> CombinationsOfTwoDifferentTitles =
-            from title1 in HarryPotterBooks.Titles
-            from title2 in HarryPotterBooks.Titles
-            let titles = new[] {title1, title2}
-            where TitlesAreDifferent(titles)
-            select titles;
+        private static IEnumerable<string[]> GetCombinationsOfTwoDifferentTitles(string[] allTitles)
+        {
+            return from title1 in allTitles
+                   from title2 in allTitles
+                   let titles = new[] { title1, title2 }
+                   where TitlesAreDifferent(titles)
+                   select titles;
+        }
 
-        private static readonly IEnumerable<string[]> CombinationsOfThreeDifferentTitles =
-            from title1 in HarryPotterBooks.Titles
-            from title2 in HarryPotterBooks.Titles
-            from title3 in HarryPotterBooks.Titles
-            let titles = new[] {title1, title2, title3}
-            where TitlesAreDifferent(titles)
-            select titles;
+        private static IEnumerable<string[]> GetCombinationsOfThreeDifferentTitles(string[] allTitles)
+        {
+            return from title1 in allTitles
+                   from title2 in allTitles
+                   from title3 in allTitles
+                   let titles = new[] { title1, title2, title3 }
+                   where TitlesAreDifferent(titles)
+                   select titles;
+        }
 
-        private static readonly IEnumerable<string[]> CombinationsOfFourDifferentTitles =
-            from title1 in HarryPotterBooks.Titles
-            from title2 in HarryPotterBooks.Titles
-            from title3 in HarryPotterBooks.Titles
-            from title4 in HarryPotterBooks.Titles
-            let titles = new[] {title1, title2, title3, title4 }
-            where TitlesAreDifferent(titles)
-            select titles;
+        private static IEnumerable<string[]> GetCombinationsOfFourDifferentTitles(string[] allTitles)
+        {
+            return from title1 in allTitles
+                   from title2 in allTitles
+                   from title3 in allTitles
+                   from title4 in allTitles
+                   let titles = new[] { title1, title2, title3, title4 }
+                   where TitlesAreDifferent(titles)
+                   select titles;
+        }
 
-        private static readonly IEnumerable<string[]> CombinationsOfFiveDifferentTitles =
-            from title1 in HarryPotterBooks.Titles
-            from title2 in HarryPotterBooks.Titles
-            from title3 in HarryPotterBooks.Titles
-            from title4 in HarryPotterBooks.Titles
-            from title5 in HarryPotterBooks.Titles
-            let titles = new[] {title1, title2, title3, title4, title5 }
-            where TitlesAreDifferent(titles)
-            select titles;
+        private static IEnumerable<string[]> GetCombinationsOfFiveDifferentTitles(string[] allTitles)
+        {
+            return from title1 in allTitles
+                   from title2 in allTitles
+                   from title3 in allTitles
+                   from title4 in allTitles
+                   from title5 in allTitles
+                   let titles = new[] { title1, title2, title3, title4, title5 }
+                   where TitlesAreDifferent(titles)
+                   select titles;
+        }
 
         private static readonly Gen<string> GenOneTitle = Gen.elements(HarryPotterBooks.Titles);
+        private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(GetCombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(GetCombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(GetCombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(GetCombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
 
         private static readonly Gen<string[]> GenMultipleTitlesTheSame =
             GenOneTitle.SelectMany(
                 title => Gen.choose(1, 10).Select(
                     n => Enumerable.Repeat(title, n).ToArray()));
 
-        private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(CombinationsOfTwoDifferentTitles);
-        private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(CombinationsOfThreeDifferentTitles);
-        private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(CombinationsOfFourDifferentTitles);
-        private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(CombinationsOfFiveDifferentTitles);
-
-        // private static readonly Gen<string[]> GenFourTitles = Gen.arrayOfLength(4, Gen.elements(HarryPotterBooks.Titles));
-        // private static readonly Gen<string[]> GenFourDifferentTitlesPlusTwoDifferentTitles =
-        //     GenFourTitles.SelectMany(
-        //         four => Gen.arrayOfLength(2, Gen.elements(four)).Select(
-        //             two => four.Concat(two).ToArray()));
-
-        private static readonly Gen<string[]> GenFourDifferentTitlesPlusTwoDifferentTitles =
+        private static readonly Gen<string[]> GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
             GenFourDifferentTitles.SelectMany(
-                four =>
-                    {
-                        var v1 =
-                            from title1 in four
-                            from title2 in four
-                            let titles = new[] {title1, title2}
-                            where TitlesAreDifferent(titles)
-                            select titles;
-                        var v2 = Gen.elements(v1);
-                        var v3 = v2.Select(two => four.Concat(two).ToArray());
-                        return v3;
-                    });
+                four => Gen.elements(GetCombinationsOfTwoDifferentTitles(four)).Select(
+                    two => four.Concat(two).ToArray()));
 
         private static bool CheckPrice(IEnumerable<string> titles, decimal expectedPrice)
         {
@@ -143,10 +134,10 @@ namespace PropertyTests
         }
 
         [FsCheck.NUnit.Property]
-        public void FourDifferentBooksPlusTwoDifferentBooks()
+        public void OverlappingFourDifferentBooksPlusTwoDifferentBooks()
         {
             Spec
-                .For(GenFourDifferentTitlesPlusTwoDifferentTitles, titles => CheckPrice(titles, (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m)))
+                .For(GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles, titles => CheckPrice(titles, (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m)))
                 .QuickCheckThrowOnFailure();
         }
     }
