@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Book.cs" />
     <Compile Include="BookStringExtensions.cs" />
+    <Compile Include="HarryPotterBooks.cs" />
     <Compile Include="PotterCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
