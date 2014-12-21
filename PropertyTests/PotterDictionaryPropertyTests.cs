@@ -3,6 +3,7 @@ using System.Linq;
 using Code;
 using FsCheck;
 using FsCheck.Fluent;
+using NUnit.Framework;
 
 namespace PropertyTests
 {
@@ -83,6 +84,43 @@ namespace PropertyTests
         private static bool CheckPrice(string title, decimal expectedPrice)
         {
             return CheckPrice(new[] {title}, expectedPrice);
+        }
+
+        private class NonShrinkStringArray : Arbitrary<string[]>
+        {
+            public override Gen<string[]> Generator
+            {
+                get { return Gen.constant(new string[0]); }
+            }
+
+            public override IEnumerable<string[]> Shrinker(string[] _)
+            {
+                return Enumerable.Empty<string[]>();
+            }
+        }
+
+        // ReSharper disable ClassNeverInstantiated.Local
+        private class MyArbitraries
+        {
+            // ReSharper disable UnusedMember.Local
+            public static Arbitrary<string[]> StringArray()
+            {
+                return new NonShrinkStringArray();
+            }
+            // ReSharper restore UnusedMember.Local
+        }
+        // ReSharper restore ClassNeverInstantiated.Local
+
+        [SetUp]
+        public void SetUp()
+        {
+            // We never want to shrink our string arrays because the exact contents of our
+            // generated string arrays are carefully calculated. There may be a better way
+            // to achieve this but for now, register an Arbitrary<string[]> whose Shrinker
+            // returns an empty enumerable. There is something called DontShrink but I
+            // don't know how to use it.
+            // https://fsharp.github.io/FsCheck/reference/fscheck-dontshrink-1.html
+            DefaultArbitraries.Add<MyArbitraries>();
         }
 
         [FsCheck.NUnit.Property]
