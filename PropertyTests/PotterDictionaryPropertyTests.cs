@@ -11,12 +11,23 @@ namespace PropertyTests
     {
         private const decimal UnitPrice = PotterCalculator.UnitPrice;
 
+        private static bool CheckPriceOfBooks(string[] titles, decimal expectedPrice)
+        {
+            var actualPrice = PotterCalculator.CalculatePrice(titles);
+            return actualPrice == expectedPrice;
+        }
+
+        private static bool CheckPriceOfBooks(string title, decimal expectedPrice)
+        {
+            return CheckPriceOfBooks(new[] { title }, expectedPrice);
+        }
+
         private static bool TitlesAreDifferent(ICollection<string> titles)
         {
             return titles.Distinct().Count() == titles.Count;
         }
 
-        private static IEnumerable<string[]> GetCombinationsOfTwoDifferentTitles(string[] allTitles)
+        private static IEnumerable<string[]> CombinationsOfTwoDifferentTitles(string[] allTitles)
         {
             return from title1 in allTitles
                    from title2 in allTitles
@@ -25,7 +36,7 @@ namespace PropertyTests
                    select titles;
         }
 
-        private static IEnumerable<string[]> GetCombinationsOfThreeDifferentTitles(string[] allTitles)
+        private static IEnumerable<string[]> CombinationsOfThreeDifferentTitles(string[] allTitles)
         {
             return from title1 in allTitles
                    from title2 in allTitles
@@ -35,7 +46,7 @@ namespace PropertyTests
                    select titles;
         }
 
-        private static IEnumerable<string[]> GetCombinationsOfFourDifferentTitles(string[] allTitles)
+        private static IEnumerable<string[]> CombinationsOfFourDifferentTitles(string[] allTitles)
         {
             return from title1 in allTitles
                    from title2 in allTitles
@@ -46,7 +57,7 @@ namespace PropertyTests
                    select titles;
         }
 
-        private static IEnumerable<string[]> GetCombinationsOfFiveDifferentTitles(string[] allTitles)
+        private static IEnumerable<string[]> CombinationsOfFiveDifferentTitles(string[] allTitles)
         {
             return from title1 in allTitles
                    from title2 in allTitles
@@ -59,10 +70,10 @@ namespace PropertyTests
         }
 
         private static readonly Gen<string> GenOneTitle = Gen.elements(HarryPotterBooks.Titles);
-        private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(GetCombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(GetCombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(GetCombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(GetCombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(CombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(CombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(CombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(CombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
 
         private static readonly Gen<string[]> GenMultipleTitlesTheSame =
             from title in GenOneTitle
@@ -71,19 +82,8 @@ namespace PropertyTests
 
         private static readonly Gen<string[]> GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
             from four in GenFourDifferentTitles
-            from two in Gen.elements(GetCombinationsOfTwoDifferentTitles(four))
+            from two in Gen.elements(CombinationsOfTwoDifferentTitles(four))
             select four.Concat(two).ToArray();
-
-        private static bool CheckPrice(string[] titles, decimal expectedPrice)
-        {
-            var actualPrice = PotterCalculator.CalculatePrice(titles);
-            return actualPrice == expectedPrice;
-        }
-
-        private static bool CheckPrice(string title, decimal expectedPrice)
-        {
-            return CheckPrice(new[] {title}, expectedPrice);
-        }
 
         private class NonShrinkStringArray : Arbitrary<string[]>
         {
@@ -126,7 +126,7 @@ namespace PropertyTests
         public void OneBook()
         {
             Spec
-                .For(GenOneTitle, title => CheckPrice(title, UnitPrice))
+                .For(GenOneTitle, title => CheckPriceOfBooks(title, UnitPrice))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -134,7 +134,7 @@ namespace PropertyTests
         public void MultipleBooksTheSame()
         {
             Spec
-                .For(GenMultipleTitlesTheSame, titles => CheckPrice(titles, titles.Length * UnitPrice))
+                .For(GenMultipleTitlesTheSame, titles => CheckPriceOfBooks(titles, titles.Length * UnitPrice))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -142,7 +142,7 @@ namespace PropertyTests
         public void TwoDifferentBooks()
         {
             Spec
-                .For(GenTwoDifferentTitles, titles => CheckPrice(titles, 2 * UnitPrice * 0.95m))
+                .For(GenTwoDifferentTitles, titles => CheckPriceOfBooks(titles, 2 * UnitPrice * 0.95m))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -150,7 +150,7 @@ namespace PropertyTests
         public void ThreeDifferentBooks()
         {
             Spec
-                .For(GenThreeDifferentTitles, titles => CheckPrice(titles, 3 * UnitPrice * 0.90m))
+                .For(GenThreeDifferentTitles, titles => CheckPriceOfBooks(titles, 3 * UnitPrice * 0.90m))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -158,7 +158,7 @@ namespace PropertyTests
         public void FourDifferentBooks()
         {
             Spec
-                .For(GenFourDifferentTitles, titles => CheckPrice(titles, 4 * UnitPrice * 0.80m))
+                .For(GenFourDifferentTitles, titles => CheckPriceOfBooks(titles, 4 * UnitPrice * 0.80m))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -166,7 +166,7 @@ namespace PropertyTests
         public void FiveDifferentBooks()
         {
             Spec
-                .For(GenFiveDifferentTitles, titles => CheckPrice(titles, 5 * UnitPrice * 0.75m))
+                .For(GenFiveDifferentTitles, titles => CheckPriceOfBooks(titles, 5 * UnitPrice * 0.75m))
                 .QuickCheckThrowOnFailure();
         }
 
@@ -174,7 +174,7 @@ namespace PropertyTests
         public void OverlappingFourDifferentBooksPlusTwoDifferentBooks()
         {
             Spec
-                .For(GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles, titles => CheckPrice(titles, (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m)))
+                .For(GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles, titles => CheckPriceOfBooks(titles, (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m)))
                 .QuickCheckThrowOnFailure();
         }
     }

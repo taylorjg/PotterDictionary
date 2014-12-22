@@ -66,10 +66,9 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PropertyTests.fs" />
+    <Compile Include="PotterDictionaryPropertyTests.fs" />
     <None Include="packages.config" />
     <None Include="app.config" />
-    <Compile Include="FsCheckAddin.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Code\Code.csproj">
