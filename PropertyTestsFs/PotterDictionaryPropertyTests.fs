@@ -65,6 +65,13 @@ let genMultipleTitlesTheSame =
         return Enumerable.Repeat(title, n) |> Seq.toArray
     }
 
+let genOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
+    gen {
+        let! four = genFourDifferentTitles
+        let! two = Gen.elements(combinationsOfThreeDifferentTitles(four))
+        return Array.append four two
+    }
+
 type MyArbitraries =
   static member NonShrinkingStringArray() =
       {new Arbitrary<string[]>() with
@@ -102,4 +109,9 @@ let ``four books different``() =
 [<Property(Verbose=true)>]
 let ``five books different``() = 
     let specBuilder = Spec.For (genFiveDifferentTitles, fun titles -> checkPriceOfBooks titles (5m * 8m * 0.75m))
+    specBuilder.QuickCheckThrowOnFailure()
+
+let ``overlapping four different books plus two different books``() =
+    let expectedPrice = (4m * 8m * 0.80m) + (2m * 8m * 0.95m)
+    let specBuilder = Spec.For (genOverlappingFourDifferentTitlesPlusTwoDifferentTitles, fun titles -> checkPriceOfBooks titles expectedPrice)
     specBuilder.QuickCheckThrowOnFailure()
