@@ -9,15 +9,15 @@ namespace Code
     {
         public const decimal UnitPrice = 8m;
 
-        public static decimal CalculatePrice(params Book[] books)
+        public static decimal CalculatePrice(params string[] titles)
         {
-            return CalculateDictionary(MakeDictionary(books), 0m);
+            return CalculateDictionary(MakeDictionary(titles), 0m);
         }
 
-        private static ImmutableDictionary<string, int> MakeDictionary(IEnumerable<Book> books)
+        private static ImmutableDictionary<string, int> MakeDictionary(IEnumerable<string> titles)
         {
-            return books
-                .GroupBy(b => b.Name)
+            return titles
+                .GroupBy(title => title)
                 .ToImmutableDictionary(g => g.Key, g => g.Count());
         }
 

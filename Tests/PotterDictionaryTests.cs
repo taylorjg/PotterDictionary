@@ -10,25 +10,37 @@ namespace Tests
     {
         private const decimal UnitPrice = PotterCalculator.UnitPrice;
 
-        [TestCaseSource("TestCaseSourceForBasics")]
-        public void Basics(string bookNames, decimal expected)
+        private static IEnumerable<string> SplitCommaSeparatedTitles(string commaSeparatedTitles)
         {
-            var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
-            Assert.That(actual, Is.EqualTo(expected));
+            return commaSeparatedTitles
+                .Split(',')
+                .Select(title => title.Trim())
+                .Where(title => title.Length > 0);
+        }
+
+        private static void CheckPrice(string commaSeparatedTitles, decimal expectedPrice)
+        {
+            var titles = SplitCommaSeparatedTitles(commaSeparatedTitles).ToArray();
+            var actualPrice = PotterCalculator.CalculatePrice(titles);
+            Assert.That(actualPrice, Is.EqualTo(expectedPrice));
+        }
+
+        [TestCaseSource("TestCaseSourceForBasics")]
+        public void Basics(string commaSeparatedTitles, decimal expectedPrice)
+        {
+            CheckPrice(commaSeparatedTitles, expectedPrice);
         }
 
         [TestCaseSource("TestCaseSourceForSimpleDiscounts")]
-        public void SimpleDiscounts(string bookNames, decimal expected)
+        public void SimpleDiscounts(string commaSeparatedTitles, decimal expectedPrice)
         {
-            var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
-            Assert.That(actual, Is.EqualTo(expected));
+            CheckPrice(commaSeparatedTitles, expectedPrice);
         }
 
         [TestCaseSource("TestCaseSourceForSeveralDiscounts")]
-        public void SeveralDiscounts(string bookNames, decimal expected)
+        public void SeveralDiscounts(string commaSeparatedTitles, decimal expectedPrice)
         {
-            var actual = PotterCalculator.CalculatePrice(bookNames.ToBooks().ToArray());
-            Assert.That(actual, Is.EqualTo(expected));
+            CheckPrice(commaSeparatedTitles, expectedPrice);
         }
 
         // ReSharper disable UnusedMethodReturnValue.Local

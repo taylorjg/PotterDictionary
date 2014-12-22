@@ -74,10 +74,9 @@ namespace PropertyTests
             from two in Gen.elements(GetCombinationsOfTwoDifferentTitles(four))
             select four.Concat(two).ToArray();
 
-        private static bool CheckPrice(IEnumerable<string> titles, decimal expectedPrice)
+        private static bool CheckPrice(string[] titles, decimal expectedPrice)
         {
-            var books = titles.Select(title => new Book(title)).ToArray();
-            var actualPrice = PotterCalculator.CalculatePrice(books);
+            var actualPrice = PotterCalculator.CalculatePrice(titles);
             return actualPrice == expectedPrice;
         }
 
