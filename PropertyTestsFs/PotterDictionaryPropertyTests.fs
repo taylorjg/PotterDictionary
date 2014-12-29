@@ -7,12 +7,21 @@ open FsCheck.Fluent
 open System.Linq
 open Code
 
+let unitPrice = PotterCalculator.UnitPrice
+
 let checkPriceOfBooks (titles:string[]) (expectedPrice:decimal) =
     let actualPrice = PotterCalculator.CalculatePrice titles
     actualPrice = expectedPrice
 
-let titlesAreDifferent (titles:string[]) =
-    Seq.length(Seq.distinct(titles)) = Seq.length titles
+let checkPriceOfBooksSpec (gen:Gen<string[]>) (expectedPriceFun:string[] -> decimal) =
+    let specBuilder = Spec.For (gen, fun titles -> checkPriceOfBooks titles (expectedPriceFun titles))
+    specBuilder.QuickCheckThrowOnFailure()
+
+let fixedExpectedPriceFun (expectedPrice:decimal) = 
+    fun _ -> expectedPrice
+
+let titlesAreDifferent titles =
+    Seq.length(Seq.distinct titles) = Seq.length titles
 
 let combinationsOfTwoDifferentTitles all =
     seq {
@@ -53,6 +62,7 @@ let combinationsOfFiveDifferentTitles all =
     }
 
 let genOneTitle = Gen.elements(HarryPotterBooks.Titles)
+let genOneTitleArray = Gen.map (fun title -> Seq.singleton title |> Seq.toArray) genOneTitle
 let genTwoDifferentTitles = Gen.elements(combinationsOfTwoDifferentTitles(HarryPotterBooks.Titles))
 let genThreeDifferentTitles = Gen.elements(combinationsOfThreeDifferentTitles(HarryPotterBooks.Titles))
 let genFourDifferentTitles = Gen.elements(combinationsOfFourDifferentTitles(HarryPotterBooks.Titles))
@@ -68,50 +78,51 @@ let genMultipleTitlesTheSame =
 let genOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
     gen {
         let! four = genFourDifferentTitles
-        let! two = Gen.elements(combinationsOfThreeDifferentTitles(four))
+        let! two = Gen.elements(combinationsOfTwoDifferentTitles(four))
         return Array.append four two
     }
 
 type MyArbitraries =
   static member NonShrinkingStringArray() =
-      {new Arbitrary<string[]>() with
+      { new Arbitrary<string[]>() with
           override x.Generator = Gen.constant [||]
           override x.Shrinker _ = Seq.empty }    
 
 [<SetUp>]
-let setUp = DefaultArbitraries.Add<MyArbitraries>() |> ignore
+let setUp =
+    DefaultArbitraries.Add<MyArbitraries>() |> ignore
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``one book``() = 
-    let specBuilder = Spec.For (genOneTitle, fun title -> checkPriceOfBooks [|title|] 8m)
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = unitPrice
+    checkPriceOfBooksSpec genOneTitleArray (fixedExpectedPriceFun expectedPrice)
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``multiple books the same``() = 
-    let specBuilder = Spec.For (genMultipleTitlesTheSame, fun titles -> checkPriceOfBooks titles (8m * (Seq.length titles |> decimal)))
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPriceFun = fun titles -> (Seq.length titles |> decimal) * unitPrice
+    checkPriceOfBooksSpec genMultipleTitlesTheSame expectedPriceFun
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``two books different``() = 
-    let specBuilder = Spec.For (genTwoDifferentTitles, fun titles -> checkPriceOfBooks titles (2m * 8m * 0.95m))
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = 2m * unitPrice * 0.95m
+    checkPriceOfBooksSpec genTwoDifferentTitles (fixedExpectedPriceFun expectedPrice)
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``three books different``() = 
-    let specBuilder = Spec.For (genThreeDifferentTitles, fun titles -> checkPriceOfBooks titles (3m * 8m * 0.90m))
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = 3m * unitPrice * 0.90m
+    checkPriceOfBooksSpec genThreeDifferentTitles (fixedExpectedPriceFun expectedPrice)
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``four books different``() = 
-    let specBuilder = Spec.For (genFourDifferentTitles, fun titles -> checkPriceOfBooks titles (4m * 8m * 0.80m))
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = 4m * unitPrice * 0.80m
+    checkPriceOfBooksSpec genFourDifferentTitles (fixedExpectedPriceFun expectedPrice)
 
-[<Property(Verbose=true)>]
+[<Property>]
 let ``five books different``() = 
-    let specBuilder = Spec.For (genFiveDifferentTitles, fun titles -> checkPriceOfBooks titles (5m * 8m * 0.75m))
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = 5m * unitPrice * 0.75m
+    checkPriceOfBooksSpec genFiveDifferentTitles (fixedExpectedPriceFun expectedPrice)
 
+[<Property>]
 let ``overlapping four different books plus two different books``() =
-    let expectedPrice = (4m * 8m * 0.80m) + (2m * 8m * 0.95m)
-    let specBuilder = Spec.For (genOverlappingFourDifferentTitlesPlusTwoDifferentTitles, fun titles -> checkPriceOfBooks titles expectedPrice)
-    specBuilder.QuickCheckThrowOnFailure()
+    let expectedPrice = (4m * unitPrice * 0.80m) + (2m * unitPrice * 0.95m)
+    checkPriceOfBooksSpec genOverlappingFourDifferentTitlesPlusTwoDifferentTitles (fixedExpectedPriceFun expectedPrice)
