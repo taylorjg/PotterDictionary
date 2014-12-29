@@ -27,3 +27,7 @@ Here is an example:
 
 However, the tests run fine if I select "Debug Unit Tests" (with or without any breakpoints set) instead of "Run Unit Tests".
 The console test program runs fine too. I have no idea why the above error occurs in the context of NUnit - it is a complete mystery!
+
+UPDATE: There is a bug report of a similar issue here:
+
+https://github.com/dotnet/corefx/issues/320
