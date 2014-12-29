@@ -71,7 +71,7 @@ let genFiveDifferentTitles = Gen.elements(combinationsOfFiveDifferentTitles(Harr
 let genMultipleTitlesTheSame =
     gen {
         let! title = genOneTitle
-        let! n = Gen.choose(1, 10)
+        let! n = Gen.choose(0, 20)
         return Enumerable.Repeat(title, n) |> Seq.toArray
     }
 

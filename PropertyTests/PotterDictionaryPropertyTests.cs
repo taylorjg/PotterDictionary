@@ -77,7 +77,7 @@ namespace PropertyTests
 
         private static readonly Gen<string[]> GenMultipleTitlesTheSame =
             from title in GenOneTitle
-            from n in Gen.choose(1, 10)
+            from n in Gen.choose(0, 20)
             select Enumerable.Repeat(title, n).ToArray();
 
         private static readonly Gen<string[]> GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
