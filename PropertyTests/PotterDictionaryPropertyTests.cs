@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Code;
 using FsCheck;
 using FsCheck.Fluent;
+using Microsoft.FSharp.Core;
 using NUnit.Framework;
 
 namespace PropertyTests
@@ -17,9 +19,16 @@ namespace PropertyTests
             return actualPrice == expectedPrice;
         }
 
-        private static bool CheckPriceOfBooks(string title, decimal expectedPrice)
+        private static void CheckPriceOfBooksSpec(Gen<string[]> gen, Func<string[], decimal> expectedPriceFunc)
         {
-            return CheckPriceOfBooks(new[] { title }, expectedPrice);
+            Spec
+                .For(gen, titles => CheckPriceOfBooks(titles, expectedPriceFunc(titles)))
+                .QuickCheckThrowOnFailure();
+        }
+
+        private static void CheckPriceOfBooksSpecWithFixedPrice(Gen<string[]> gen, decimal expectedPrice)
+        {
+            CheckPriceOfBooksSpec(gen, _ => expectedPrice);
         }
 
         private static bool TitlesAreDifferent(ICollection<string> titles)
@@ -70,6 +79,8 @@ namespace PropertyTests
         }
 
         private static readonly Gen<string> GenOneTitle = Gen.elements(HarryPotterBooks.Titles);
+        private static readonly FSharpFunc<string, string[]> StringToSingletonArray = FSharpFunc<string, string[]>.FromConverter(s => new[] {s});
+        private static readonly Gen<string[]> GenOneTitleArray = Gen.map(StringToSingletonArray, Gen.elements(HarryPotterBooks.Titles));
         private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(CombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
         private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(CombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
         private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(CombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
@@ -125,57 +136,50 @@ namespace PropertyTests
         [FsCheck.NUnit.Property]
         public void OneBook()
         {
-            Spec
-                .For(GenOneTitle, title => CheckPriceOfBooks(title, UnitPrice))
-                .QuickCheckThrowOnFailure();
+            const decimal expectedPrice = UnitPrice;
+            CheckPriceOfBooksSpecWithFixedPrice(GenOneTitleArray, expectedPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void MultipleBooksTheSame()
         {
-            Spec
-                .For(GenMultipleTitlesTheSame, titles => CheckPriceOfBooks(titles, titles.Length * UnitPrice))
-                .QuickCheckThrowOnFailure();
+            CheckPriceOfBooksSpec(GenMultipleTitlesTheSame, titles => titles.Length * UnitPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void TwoDifferentBooks()
         {
-            Spec
-                .For(GenTwoDifferentTitles, titles => CheckPriceOfBooks(titles, 2 * UnitPrice * 0.95m))
-                .QuickCheckThrowOnFailure();
+            const decimal expectedPrice = 2 * UnitPrice * 0.95m;
+            CheckPriceOfBooksSpecWithFixedPrice(GenTwoDifferentTitles, expectedPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void ThreeDifferentBooks()
         {
-            Spec
-                .For(GenThreeDifferentTitles, titles => CheckPriceOfBooks(titles, 3 * UnitPrice * 0.90m))
-                .QuickCheckThrowOnFailure();
+            const decimal expectedPrice = 3 * UnitPrice * 0.90m;
+            CheckPriceOfBooksSpecWithFixedPrice(GenThreeDifferentTitles, expectedPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void FourDifferentBooks()
         {
-            Spec
-                .For(GenFourDifferentTitles, titles => CheckPriceOfBooks(titles, 4 * UnitPrice * 0.80m))
-                .QuickCheckThrowOnFailure();
+            const decimal expectedPrice = 4 * UnitPrice * 0.80m;
+            CheckPriceOfBooksSpecWithFixedPrice(GenFourDifferentTitles, expectedPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void FiveDifferentBooks()
         {
-            Spec
-                .For(GenFiveDifferentTitles, titles => CheckPriceOfBooks(titles, 5 * UnitPrice * 0.75m))
-                .QuickCheckThrowOnFailure();
+            const decimal expectedPrice = 5 * UnitPrice * 0.75m;
+            CheckPriceOfBooksSpecWithFixedPrice(GenFiveDifferentTitles, expectedPrice);
         }
 
         [FsCheck.NUnit.Property]
         public void OverlappingFourDifferentBooksPlusTwoDifferentBooks()
         {
-            Spec
-                .For(GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles, titles => CheckPriceOfBooks(titles, (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m)))
-                .QuickCheckThrowOnFailure();
+            var gen = GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles;
+            const decimal expectedPrice = (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m);
+            CheckPriceOfBooksSpecWithFixedPrice(gen, expectedPrice);
         }
     }
 }

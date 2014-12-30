@@ -124,6 +124,6 @@ let ``five books different``() =
 
 [<Property>]
 let ``overlapping four different books plus two different books``() =
-    let expectedPrice = (4m * unitPrice * 0.80m) + (2m * unitPrice * 0.95m)
     let gen = genOverlappingFourDifferentTitlesPlusTwoDifferentTitles
+    let expectedPrice = (4m * unitPrice * 0.80m) + (2m * unitPrice * 0.95m)
     checkPriceOfBooksSpecWithFixedPrice gen expectedPrice
