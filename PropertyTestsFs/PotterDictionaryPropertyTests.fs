@@ -17,8 +17,8 @@ let checkPriceOfBooksSpec (gen:Gen<string[]>) (expectedPriceFun:string[] -> deci
     let specBuilder = Spec.For (gen, fun titles -> checkPriceOfBooks titles (expectedPriceFun titles))
     specBuilder.QuickCheckThrowOnFailure()
 
-let fixedExpectedPriceFun (expectedPrice:decimal) = 
-    fun _ -> expectedPrice
+let checkPriceOfBooksSpecWithFixedPrice (gen:Gen<string[]>) (expectedPrice:decimal) =
+    checkPriceOfBooksSpec gen (fun _ -> expectedPrice)
 
 let titlesAreDifferent titles =
     Seq.length(Seq.distinct titles) = Seq.length titles
@@ -95,7 +95,7 @@ let setUp =
 [<Property>]
 let ``one book``() = 
     let expectedPrice = unitPrice
-    checkPriceOfBooksSpec genOneTitleArray (fixedExpectedPriceFun expectedPrice)
+    checkPriceOfBooksSpecWithFixedPrice genOneTitleArray expectedPrice
 
 [<Property>]
 let ``multiple books the same``() = 
@@ -105,24 +105,25 @@ let ``multiple books the same``() =
 [<Property>]
 let ``two books different``() = 
     let expectedPrice = 2m * unitPrice * 0.95m
-    checkPriceOfBooksSpec genTwoDifferentTitles (fixedExpectedPriceFun expectedPrice)
+    checkPriceOfBooksSpecWithFixedPrice genTwoDifferentTitles expectedPrice
 
 [<Property>]
 let ``three books different``() = 
     let expectedPrice = 3m * unitPrice * 0.90m
-    checkPriceOfBooksSpec genThreeDifferentTitles (fixedExpectedPriceFun expectedPrice)
+    checkPriceOfBooksSpecWithFixedPrice genThreeDifferentTitles expectedPrice
 
 [<Property>]
 let ``four books different``() = 
     let expectedPrice = 4m * unitPrice * 0.80m
-    checkPriceOfBooksSpec genFourDifferentTitles (fixedExpectedPriceFun expectedPrice)
+    checkPriceOfBooksSpecWithFixedPrice genFourDifferentTitles expectedPrice
 
 [<Property>]
 let ``five books different``() = 
     let expectedPrice = 5m * unitPrice * 0.75m
-    checkPriceOfBooksSpec genFiveDifferentTitles (fixedExpectedPriceFun expectedPrice)
+    checkPriceOfBooksSpecWithFixedPrice genFiveDifferentTitles expectedPrice
 
 [<Property>]
 let ``overlapping four different books plus two different books``() =
     let expectedPrice = (4m * unitPrice * 0.80m) + (2m * unitPrice * 0.95m)
-    checkPriceOfBooksSpec genOverlappingFourDifferentTitlesPlusTwoDifferentTitles (fixedExpectedPriceFun expectedPrice)
+    let gen = genOverlappingFourDifferentTitlesPlusTwoDifferentTitles
+    checkPriceOfBooksSpecWithFixedPrice gen expectedPrice
