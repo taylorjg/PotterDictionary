@@ -1,6 +1,5 @@
 ﻿module PotterDictionaryPropertyTests
 
-open NUnit.Framework
 open FsCheck
 open FsCheck.NUnit
 open FsCheck.Fluent
@@ -14,8 +13,11 @@ let checkPriceOfBooks (titles:string[]) (expectedPrice:decimal) =
     actualPrice = expectedPrice
 
 let checkPriceOfBooksSpec (gen:Gen<string[]>) (expectedPriceFun:string[] -> decimal) =
+    let dontShrinkStringArrays = new System.Func<string[], seq<string[]>>(fun _ -> Seq.empty) 
     let specBuilder = Spec.For (gen, fun titles -> checkPriceOfBooks titles (expectedPriceFun titles))
-    specBuilder.QuickCheckThrowOnFailure()
+    specBuilder
+        .Shrink(dontShrinkStringArrays)
+        .QuickCheckThrowOnFailure()
 
 let checkPriceOfBooksSpecWithFixedPrice (gen:Gen<string[]>) (expectedPrice:decimal) =
     checkPriceOfBooksSpec gen (fun _ -> expectedPrice)
@@ -81,16 +83,6 @@ let genOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
         let! two = Gen.elements(combinationsOfTwoDifferentTitles(four))
         return Array.append four two
     }
-
-type MyArbitraries =
-  static member NonShrinkingStringArray() =
-      { new Arbitrary<string[]>() with
-          override x.Generator = Gen.constant [||]
-          override x.Shrinker _ = Seq.empty }    
-
-[<SetUp>]
-let setUp =
-    DefaultArbitraries.Add<MyArbitraries>() |> ignore
 
 [<Property>]
 let ``one book``() = 
