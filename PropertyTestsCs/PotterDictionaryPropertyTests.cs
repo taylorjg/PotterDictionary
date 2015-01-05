@@ -80,7 +80,7 @@ namespace PropertyTests
 
         private static readonly Gen<string> GenOneTitle = Gen.elements(HarryPotterBooks.Titles);
         private static readonly FSharpFunc<string, string[]> StringToSingletonArray = FSharpFunc<string, string[]>.FromConverter(s => new[] {s});
-        private static readonly Gen<string[]> GenOneTitleArray = Gen.map(StringToSingletonArray, Gen.elements(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenOneTitleArray = Gen.map(StringToSingletonArray, GenOneTitle);
         private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(CombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
         private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(CombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
         private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(CombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));

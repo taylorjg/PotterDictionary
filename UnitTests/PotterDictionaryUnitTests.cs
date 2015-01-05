@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Tests
 {
     [TestFixture]
-    class PotterDictionaryTests
+    class PotterDictionaryUnitTests
     {
         private const decimal UnitPrice = PotterCalculator.UnitPrice;
 
