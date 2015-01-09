@@ -4,7 +4,6 @@ using System.Linq;
 using Code;
 using FsCheck;
 using FsCheck.Fluent;
-using Microsoft.FSharp.Core;
 
 namespace PropertyTests
 {
@@ -18,11 +17,16 @@ namespace PropertyTests
             return actualPrice == expectedPrice;
         }
 
+        private static Func<T, IEnumerable<T>> DontShrink<T>()
+        {
+            return _ => Enumerable.Empty<T>();
+        }
+
         private static void CheckPriceOfBooksSpec(Gen<string[]> gen, Func<string[], decimal> expectedPriceFunc)
         {
             Spec
                 .For(gen, titles => CheckPriceOfBooks(titles, expectedPriceFunc(titles)))
-                .Shrink(_ => Enumerable.Empty<string[]>())
+                .Shrink(DontShrink<string[]>())
                 .QuickCheckThrowOnFailure();
         }
 
@@ -78,22 +82,21 @@ namespace PropertyTests
                    select titles;
         }
 
-        private static readonly Gen<string> GenOneTitle = Gen.elements(HarryPotterBooks.Titles);
-        private static readonly FSharpFunc<string, string[]> StringToSingletonArray = FSharpFunc<string, string[]>.FromConverter(s => new[] {s});
-        private static readonly Gen<string[]> GenOneTitleArray = Gen.map(StringToSingletonArray, GenOneTitle);
-        private static readonly Gen<string[]> GenTwoDifferentTitles = Gen.elements(CombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenThreeDifferentTitles = Gen.elements(CombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenFourDifferentTitles = Gen.elements(CombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
-        private static readonly Gen<string[]> GenFiveDifferentTitles = Gen.elements(CombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string> GenOneTitle = Any.ValueIn(HarryPotterBooks.Titles);
+        private static readonly Gen<string[]> GenOneTitleArray = GenOneTitle.Select(s => new[]{s});
+        private static readonly Gen<string[]> GenTwoDifferentTitles = Any.ValueIn(CombinationsOfTwoDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenThreeDifferentTitles = Any.ValueIn(CombinationsOfThreeDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFourDifferentTitles = Any.ValueIn(CombinationsOfFourDifferentTitles(HarryPotterBooks.Titles));
+        private static readonly Gen<string[]> GenFiveDifferentTitles = Any.ValueIn(CombinationsOfFiveDifferentTitles(HarryPotterBooks.Titles));
 
         private static readonly Gen<string[]> GenMultipleTitlesTheSame =
             from title in GenOneTitle
-            from n in Gen.choose(0, 20)
+            from n in Any.IntBetween(0, 20)
             select Enumerable.Repeat(title, n).ToArray();
 
-        private static readonly Gen<string[]> GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
+        private static readonly Gen<string[]> GenFullyOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
             from four in GenFourDifferentTitles
-            from two in Gen.elements(CombinationsOfTwoDifferentTitles(four))
+            from two in Any.ValueIn(CombinationsOfTwoDifferentTitles(four))
             select four.Concat(two).ToArray();
 
         [FsCheck.NUnit.Property]
@@ -138,9 +141,9 @@ namespace PropertyTests
         }
 
         [FsCheck.NUnit.Property]
-        public void OverlappingFourDifferentBooksPlusTwoDifferentBooks()
+        public void FullyOverlappingFourDifferentBooksPlusTwoDifferentBooks()
         {
-            var gen = GenOverlappingFourDifferentTitlesPlusTwoDifferentTitles;
+            var gen = GenFullyOverlappingFourDifferentTitlesPlusTwoDifferentTitles;
             const decimal expectedPrice = (4 * UnitPrice * 0.80m) + (2 * UnitPrice * 0.95m);
             CheckPriceOfBooksSpecWithFixedPrice(gen, expectedPrice);
         }
