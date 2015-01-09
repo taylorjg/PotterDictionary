@@ -2,24 +2,23 @@
 
 open FsCheck
 open FsCheck.NUnit
-open FsCheck.Fluent
-open System.Linq
 open Code
+open System.Linq
+
+let myConfig = Config.QuickThrowOnFailure
 
 let unitPrice = PotterCalculator.UnitPrice
 
-let checkPriceOfBooks (titles:string[]) (expectedPrice:decimal) =
+let checkPriceOfBooks titles expectedPrice =
     let actualPrice = PotterCalculator.CalculatePrice titles
     actualPrice = expectedPrice
 
-let checkPriceOfBooksSpec (gen:Gen<string[]>) (expectedPriceFun:string[] -> decimal) =
-    let dontShrinkStringArrays = new System.Func<string[], seq<string[]>>(fun _ -> Seq.empty) 
-    let specBuilder = Spec.For (gen, fun titles -> checkPriceOfBooks titles (expectedPriceFun titles))
-    specBuilder
-        .Shrink(dontShrinkStringArrays)
-        .QuickCheckThrowOnFailure()
+let checkPriceOfBooksSpec gen expectedPriceFun =
+    let arb = Arb.fromGen gen
+    let property = Prop.forAll arb (fun titles -> checkPriceOfBooks titles (expectedPriceFun titles))
+    Check.One(myConfig, property)
 
-let checkPriceOfBooksSpecWithFixedPrice (gen:Gen<string[]>) (expectedPrice:decimal) =
+let checkPriceOfBooksSpecWithFixedPrice gen expectedPrice =
     checkPriceOfBooksSpec gen (fun _ -> expectedPrice)
 
 let titlesAreDifferent titles =
@@ -27,39 +26,39 @@ let titlesAreDifferent titles =
 
 let combinationsOfTwoDifferentTitles all =
     seq {
-        for t1 in all do
-        for t2 in all do
-        let titles = [|t1; t2|]
+        for title1 in all do
+        for title2 in all do
+        let titles = [|title1; title2|]
         if titlesAreDifferent(titles) then yield titles
     }
 
 let combinationsOfThreeDifferentTitles all =
     seq {
-        for t1 in all do
-        for t2 in all do
-        for t3 in all do
-        let titles = [|t1; t2; t3|]
+        for title1 in all do
+        for title2 in all do
+        for title3 in all do
+        let titles = [|title1; title2; title3|]
         if titlesAreDifferent(titles) then yield titles
     }
 
 let combinationsOfFourDifferentTitles all =
     seq {
-        for t1 in all do
-        for t2 in all do
-        for t3 in all do
-        for t4 in all do
-        let titles = [|t1; t2; t3; t4|]
+        for title1 in all do
+        for title2 in all do
+        for title3 in all do
+        for title4 in all do
+        let titles = [|title1; title2; title3; title4|]
         if titlesAreDifferent(titles) then yield titles
     }
 
 let combinationsOfFiveDifferentTitles all =
     seq {
-        for t1 in all do
-        for t2 in all do
-        for t3 in all do
-        for t4 in all do
-        for t5 in all do
-        let titles = [|t1; t2; t3; t4; t5|]
+        for title1 in all do
+        for title2 in all do
+        for title3 in all do
+        for title4 in all do
+        for title5 in all do
+        let titles = [|title1; title2; title3; title4; title5|]
         if titlesAreDifferent(titles) then yield titles
     }
 
@@ -77,7 +76,7 @@ let genMultipleTitlesTheSame =
         return Enumerable.Repeat(title, n) |> Seq.toArray
     }
 
-let genOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
+let genFullyOverlappingFourDifferentTitlesPlusTwoDifferentTitles =
     gen {
         let! four = genFourDifferentTitles
         let! two = Gen.elements(combinationsOfTwoDifferentTitles(four))
@@ -115,7 +114,7 @@ let ``five books different``() =
     checkPriceOfBooksSpecWithFixedPrice genFiveDifferentTitles expectedPrice
 
 [<Property>]
-let ``overlapping four different books plus two different books``() =
-    let gen = genOverlappingFourDifferentTitlesPlusTwoDifferentTitles
+let ``fully overlapping four different books plus two different books``() =
+    let gen = genFullyOverlappingFourDifferentTitlesPlusTwoDifferentTitles
     let expectedPrice = (4m * unitPrice * 0.80m) + (2m * unitPrice * 0.95m)
     checkPriceOfBooksSpecWithFixedPrice gen expectedPrice
