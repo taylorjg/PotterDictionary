@@ -65,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PotterDictionaryPropertyTests.cs" />
+    <Compile Include="PropertyTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

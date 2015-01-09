@@ -8,7 +8,7 @@ using Microsoft.FSharp.Core;
 
 namespace PropertyTests
 {
-    internal class PotterDictionaryPropertyTests
+    internal class PropertyTests
     {
         private const decimal UnitPrice = PotterCalculator.UnitPrice;
 

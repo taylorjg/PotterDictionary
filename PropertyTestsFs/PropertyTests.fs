@@ -1,4 +1,4 @@
-﻿module PotterDictionaryPropertyTests
+﻿module PropertyTests
 
 open FsCheck
 open FsCheck.NUnit
